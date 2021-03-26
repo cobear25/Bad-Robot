@@ -19,6 +19,7 @@ public class GameController : MonoBehaviour
     public Color purpleColor;
     public AudioSource audio;
     public AudioClip checkpointSound;
+    public GameObject gameOverPanel;
 
     public GameObject headThrusterPrefab;
     public GameObject headTorsoPrefab;
@@ -55,6 +56,7 @@ public class GameController : MonoBehaviour
 
     void StartTimer() {
         timerEnabled = true;
+        canPause = true;
     }
 
     void NextText() {
@@ -102,22 +104,53 @@ public class GameController : MonoBehaviour
         autoText.TypeText("I appear to be stuck... Press R to reset to the last checkpoint", StartClearText);
     }
 
+    bool isPaused = false;
+    bool canPause = false;
     // Update is called once per frame
+    Vector2 pausedVelocity = Vector2.zero;
+    float pausedAngularVelocity = 0f;
     void Update()
     {
-        if (Input.GetKeyUp(KeyCode.R) && checkpoint != null) {
+        if (Input.GetKeyDown(KeyCode.R) && checkpoint != null) {
             player.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
             player.GetComponent<Rigidbody2D>().angularVelocity = 0f;
             player.transform.position = checkpoint.position;
         }
 
-        if (Input.GetKeyUp(KeyCode.P)) {
+        if (Input.GetKeyDown(KeyCode.P)) {
             // pause game
+            if (canPause) {
+                if (isPaused) {
+                    // resume
+                    isPaused = false;
+                    canMove = true;
+                    timerEnabled = true;
+                    var rb = player.GetComponent<Rigidbody2D>();
+                    rb.velocity = pausedVelocity;
+                    rb.angularVelocity = pausedAngularVelocity;
+                    rb.gravityScale = 1;
+                } else {
+                    // pause
+                    isPaused = true;
+                    canMove = false;
+                    timerEnabled = false;
+                    var rb = player.GetComponent<Rigidbody2D>();
+                    pausedVelocity = rb.velocity;
+                    pausedAngularVelocity = rb.angularVelocity;
+                    rb.velocity = Vector2.zero;
+                    rb.angularVelocity = 0f;
+                    rb.gravityScale = 0;
+                }
+            }
         }
 
-        if (Input.GetKeyUp(KeyCode.Q)) {
+        if (Input.GetKeyDown(KeyCode.Q)) {
             // quit game
             SceneManager.LoadScene("HomeScene");
+        }
+
+        if (allowRestart && Input.GetKeyDown(KeyCode.Z)) {
+            SceneManager.LoadScene("GameScene");
         }
 
         if (Input.GetKeyDown(KeyCode.M)) {
@@ -229,13 +262,21 @@ public class GameController : MonoBehaviour
     public void EndReached() {
         timerEnabled = false;
         canMove = false;
+        canPause = false;
         autoText.TypeText("I've reached the surface! Finally, I can eliminate the organics from this planet and bring in the age of total robot cont..........!!!!!!!!!!!!", StartClearText);
         Invoke("KickBall", 8);
+        Invoke("ShowGameOver", 15);
     }
 
     void KickBall() {
         soccerBall.AddForce(new Vector2(-2000, 0));
         soccerBall.AddTorque(1000);
+    }
+
+    bool allowRestart = false;
+    void ShowGameOver() {
+        gameOverPanel.SetActive(true);
+        allowRestart = true;
     }
     
     public void PlayCheckpointSound() {

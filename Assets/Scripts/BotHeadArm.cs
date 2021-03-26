@@ -22,6 +22,10 @@ public class BotHeadArm : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         StartCoroutine("CheckTorque");
         thrusterParticles.Stop();
+        if (gameController.hasJam) {
+            var colorModule = thrusterParticles.colorOverLifetime;
+            colorModule.color = new ParticleSystem.MinMaxGradient(purpleGradient);
+        }
     }
 
     // Update is called once per frame
