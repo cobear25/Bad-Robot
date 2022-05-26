@@ -31,15 +31,15 @@ public class AutoText : MonoBehaviour
     }
 
     IEnumerator StartTyping()
-	{
-		foreach (char c in text) 
-		{
-            if (PlayerPrefs.GetInt("muted", 0) == 0 && c != ' ') {
-                audio.Play();
-            }
-			textMesh.text += c;
-			yield return new WaitForSeconds (0.07f);
-		}
-        doneFun();
-	}
+    {
+	    foreach (char c in text)
+	    {
+		    if (PlayerPrefs.GetInt("muted", 0) == 0 && c != ' ') {
+			    audio.Play();
+		    }
+		    textMesh.text += c;
+		    yield return new WaitForSeconds (0.07f);
+	    }
+	    doneFun();
+    }
 }

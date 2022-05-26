@@ -20,6 +20,8 @@ public class GameController : MonoBehaviour
     public AudioSource audio;
     public AudioClip checkpointSound;
     public GameObject gameOverPanel;
+    public GameObject fadingPanel;
+    public GameObject skipText;
 
     public GameObject headThrusterPrefab;
     public GameObject headTorsoPrefab;
@@ -46,6 +48,9 @@ public class GameController : MonoBehaviour
     }
 
     void StartText() {
+        if (!timerEnabled) {
+            skipText.SetActive(true);
+        }
         autoText.TypeText("System booting.... Where am I?", TypingDone);
     }
 
@@ -60,6 +65,7 @@ public class GameController : MonoBehaviour
     }
 
     void NextText() {
+        if (timerEnabled) return;
         switch (textLevel)
         {
             case 1:
@@ -78,14 +84,18 @@ public class GameController : MonoBehaviour
                 autoText.TypeText("WMDs... ... ... NULL.      Curses!", TypingDone);
                 break;
             case 6:
-                autoText.TypeText("Head Torque... Operational.                   Use ARROW KEYS to engage Head Torque", StartClearText);
-                // TODO: Start timer, enable movement
-                canMove = true;
-                torqueText.gameObject.SetActive(true);
-                timerText.gameObject.SetActive(true);
-                StartTimer();
+                StartPlaying();
                 break;
         }
+    }
+
+    void StartPlaying() {
+        skipText.SetActive(false);
+        autoText.TypeText("Head Torque... Operational.                   Use ARROW KEYS to engage Head Torque", StartClearText);
+        canMove = true;
+        torqueText.gameObject.SetActive(true);
+        timerText.gameObject.SetActive(true);
+        StartTimer();
     }
 
     void NoOp() {
@@ -144,6 +154,12 @@ public class GameController : MonoBehaviour
             }
         }
 
+        if (Input.GetKeyDown(KeyCode.S) && !timerEnabled) {
+            // skip intro
+            StartPlaying();
+            fadingPanel.SetActive(false);
+        } 
+
         if (Input.GetKeyDown(KeyCode.Q)) {
             // quit game
             SceneManager.LoadScene("HomeScene");
@@ -151,6 +167,10 @@ public class GameController : MonoBehaviour
 
         if (allowRestart && Input.GetKeyDown(KeyCode.Z)) {
             SceneManager.LoadScene("GameScene");
+        }
+
+        if (Input.GetKeyDown(KeyCode.X) && hasArm) {
+            autoText.TypeText("Useless arm!", StartClearText);
         }
 
         if (Input.GetKeyDown(KeyCode.M)) {
@@ -222,6 +242,7 @@ public class GameController : MonoBehaviour
         autoText.TypeText("My torso! Improvements ... 50 percent increase in fuel efficiency ... improved aerial stability ... beautiful chrome finish!", StartClearText);
     }
 
+    bool hasArm = false;
     public void PickedUpArmFromHead() {
         PlayCheckpointSound();
         var newPlayer = Instantiate(headArmPrefab, player.transform.position, Quaternion.identity).GetComponent<BotHeadArm>();
@@ -232,7 +253,8 @@ public class GameController : MonoBehaviour
         Destroy(player);
         player = newPlayer.gameObject;
         cam.Follow = player.transform;
-        autoText.TypeText("My arm! I can now grab onto walls and platforms with strength far stronger than any organic lifeform. Press x to engage grapple arm.", StartClearText);
+        autoText.TypeText("My arm! I can now grab onto walls and platforms with strength far stronger than any organic lifeform! Press X to...Oh, it's nonfunctional.", StartClearText);
+        hasArm = true;
     }
 
     public void PickedUpArmFromTorso() {
@@ -245,7 +267,8 @@ public class GameController : MonoBehaviour
         Destroy(player);
         player = newPlayer.gameObject;
         cam.Follow = player.transform;
-        autoText.TypeText("My arm! I can now grab onto walls and platforms with strength far stronger than any organic lifeform. Press x to engage grapple arm.", StartClearText);
+        autoText.TypeText("My arm! I can now grab onto walls and platforms with strength far stronger than any organic lifeform! Press X to...Oh, it's nonfunctional.", StartClearText);
+        hasArm = true;
     }
 
     public void UpdateTorque(float torque) {
